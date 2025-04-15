@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול רשימת אנשים</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            direction: rtl;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-container {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .form-field {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
+        
+        th:hover {
+            background-color: #e5e5e5;
+        }
+        
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .sort-icon::after {
+            content: " ↕️";
+            font-size: 12px;
+        }
+        
+        .actions-cell {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+        }
+        
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        @media (max-width: 600px) {
+            .form-field {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>מערכת ניהול רשימת אנשים</h1>
+        
+        <div class="form-container">
+            <div class="form-group">
+                <div class="form-field">
+                    <label for="name">שם:</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-field">
+                    <label for="team">צוות:</label>
+                    <input type="text" id="team" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="form-field">
+                    <label for="departureDate">תאריך יציאה:</label>
+                    <input type="date" id="departureDate" required>
+                </div>
+                <div class="form-field">
+                    <label for="returnDate">תאריך חזרה:</label>
+                    <input type="date" id="returnDate" required>
+                </div>
+            </div>
+            <button id="addPersonBtn">הוסף לרשימה</button>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="חיפוש לפי שם, צוות או תאריך...">
+        </div>
+        
+        <div id="messageContainer"></div>
+        
+        <table id="peopleTable">
+            <thead>
+                <tr>
+                    <th data-sort="name" class="sort-icon">שם</th>
+                    <th data-sort="team" class="sort-icon">צוות</th>
+                    <th data-sort="departureDate" class="sort-icon">תאריך יציאה</th>
+                    <th data-sort="returnDate" class="sort-icon">תאריך חזרה</th>
+                    <th>פעולות</th>
+                </tr>
+            </thead>
+            <tbody id="peopleTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // נגדיר את המשתנים הגלובליים
+        let peopleList = [];
+        let currentSort = {
+            column: 'departureDate',
+            direction: 'asc'
+        };
+
+        // פונקציה לטעינת הנתונים מ-LocalStorage
+        function loadPeopleFromLocalStorage() {
+            const storedPeople = localStorage.getItem('peopleList');
+            if (storedPeople) {
+                peopleList = JSON.parse(storedPeople);
+                renderPeopleTable();
+            }
+        }
+
+        // פונקציה לשמירת הנתונים ב-LocalStorage
+        function savePeopleToLocalStorage() {
+            localStorage.setItem('peopleList', JSON.stringify(peopleList));
+        }
+
+        // פורמט תאריך לתצוגה
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('he-IL');
+        }
+
+        // פונקציה להצגת הודעה
+        function showMessage(message, type) {
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.innerHTML = `<div class="message ${type}">${message}</div>`;
+            
+            // להסיר את ההודעה אחרי 3 שניות
+            setTimeout(() => {
+                messageContainer.innerHTML = '';
+            }, 3000);
+        }
+
+        // פונקציה להוספת אדם חדש
+        function addPerson() {
+            const name = document.getElementById('name').value.trim();
+            const team = document.getElementById('team').value.trim();
+            const departureDate = document.getElementById('departureDate').value;
+            const returnDate = document.getElementById('returnDate').value;
+            
+            // בדיקת תקינות
+            if (!name || !team || !departureDate || !returnDate) {
+                showMessage('יש למלא את כל השדות', 'error');
+                return;
+            }
+            
+            if (new Date(returnDate) < new Date(departureDate)) {
+                showMessage('תאריך החזרה חייב להיות לאחר תאריך היציאה', 'error');
+                return;
+            }
+            
+            // יצירת אובייקט אדם חדש
+            const newPerson = {
+                id: Date.now(), // מזהה ייחודי
+                name,
+                team,
+                departureDate,
+                returnDate
+            };
+            
+            // הוספה לרשימה
+            peopleList.push(newPerson);
+            
+            // שמירה ב-LocalStorage
+            savePeopleToLocalStorage();
+            
+            // עדכון הטבלה
+            renderPeopleTable();
+            
+            // ניקוי הטופס
+            clearForm();
+            
+            // הצגת הודעת הצלחה
+            showMessage('הנתונים נוספו בהצלחה', 'success');
+        }
+
+        // פונקציה למחיקת אדם
+        function deletePerson(id) {
+            if (confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
+                peopleList = peopleList.filter(person => person.id !== id);
+                savePeopleToLocalStorage();
+                renderPeopleTable();
+                showMessage('הרשומה נמחקה בהצלחה', 'success');
+            }
+        }
+
+        // פונקציה לניקוי הטופס
+        function clearForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('team').value = '';
+            document.getElementById('departureDate').value = '';
+            document.getElementById('returnDate').value = '';
+        }
+
+        // פונקציה למיון הרשימה
+        function sortPeople(column) {
+            // אם לוחצים על אותה עמודה, משנים את כיוון המיון
+            const direction = column === currentSort.column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+            
+            peopleList.sort((a, b) => {
+                let valueA, valueB;
+                
+                // בדיקה אם מדובר בתאריך
+                if (column === 'departureDate' || column === 'returnDate') {
+                    valueA = new Date(a[column]);
+                    valueB = new Date(b[column]);
+                } else {
+                    valueA = a[column].toString().toLowerCase();
+                    valueB = b[column].toString().toLowerCase();
+                }
+                
+                if (direction === 'asc') {
+                    if (valueA < valueB) return -1;
+                    if (valueA > valueB) return 1;
+                    return 0;
+                } else {
+                    if (valueA > valueB) return -1;
+                    if (valueA < valueB) return 1;
+                    return 0;
+                }
+            });
+            
+            currentSort = { column, direction };
+            renderPeopleTable();
+        }
+
+        // פונקציה לחיפוש ברשימה
+        function searchPeople(query) {
+            query = query.toLowerCase();
+            
+            const filteredList = peopleList.filter(person => {
+                return (
+                    person.name.toLowerCase().includes(query) ||
+                    person.team.toLowerCase().includes(query) ||
+                    formatDate(person.departureDate).includes(query) ||
+                    formatDate(person.returnDate).includes(query)
+                );
+            });
+            
+            renderPeopleTable(filteredList);
+        }
+
+        // פונקציה לרינדור הטבלה
+        function renderPeopleTable(dataToRender = peopleList) {
+            const tableBody = document.getElementById('peopleTableBody');
+            tableBody.innerHTML = '';
+            
+            if (dataToRender.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">לא נמצאו רשומות</td></tr>';
+                return;
+            }
+            
+            dataToRender.forEach(person => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${person.name}</td>
+                    <td>${person.team}</td>
+                    <td>${formatDate(person.departureDate)}</td>
+                    <td>${formatDate(person.returnDate)}</td>
+                    <td class="actions-cell">
+                        <button class="btn-delete" onclick="deletePerson(${person.id})">מחק</button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // אתחול האפליקציה
+        document.addEventListener('DOMContentLoaded', () => {
+            // טעינת נתונים מ-LocalStorage
+            loadPeopleFromLocalStorage();
+            
+            // הוספת מאזינים לאירועים
+            document.getElementById('addPersonBtn').addEventListener('click', addPerson);
+            
+            // מאזינים לאירועי מיון
+            document.querySelectorAll('th[data-sort]').forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.getAttribute('data-sort');
+                    sortPeople(column);
+                });
+            });
+            
+            // מאזין לאירועי חיפוש
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                searchPeople(e.target.value);
+            });
+        });
+    </script>
+</body>
+</html>
