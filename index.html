@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ארנק דיגיטלי - שוברים והטבות</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+        }
+
+        .search-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .search-filter input,
+        .search-filter select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex-grow: 1;
+            min-width: 150px;
+        }
+
+        .search-filter button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-filter button:hover {
+            background-color: #2980b9;
+        }
+
+        .vouchers-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .voucher-card {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .voucher-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .voucher-card-header {
+            padding: 15px;
+            background-color: #34495e;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .voucher-card-content {
+            padding: 20px;
+        }
+
+        .voucher-details {
+            margin-bottom: 15px;
+        }
+
+        .voucher-details p {
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .voucher-expiry {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .expiry-bar {
+            flex-grow: 1;
+            height: 8px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-left: 10px;
+        }
+
+        .expiry-progress {
+            height: 100%;
+            background-color: #e74c3c;
+        }
+
+        .expiry-critical {
+            background-color: #e74c3c;
+        }
+
+        .expiry-warning {
+            background-color: #f39c12;
+        }
+
+        .expiry-safe {
+            background-color: #2ecc71;
+        }
+
+        .voucher-code {
+            background-color: #f9f9f9;
+            padding: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            border: 1px dashed #ddd;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .use-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+
+        .use-btn:hover {
+            background-color: #219652;
+        }
+
+        .add-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: background-color 0.3s;
+        }
+
+        .add-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+        .empty-state img {
+            width: 150px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .empty-state p {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .vouchers-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-filter {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+            color: white;
+        }
+
+        .badge-food {
+            background-color: #e74c3c;
+        }
+
+        .badge-shopping {
+            background-color: #3498db;
+        }
+
+        .badge-entertainment {
+            background-color: #9b59b6;
+        }
+
+        .badge-travel {
+            background-color: #2ecc71;
+        }
+
+        .badge-other {
+            background-color: #95a5a6;
+        }
+
+        .badge-discount {
+            background-color: #f39c12;
+        }
+
+        .badge-gift {
+            background-color: #e84393;
+        }
+
+        .badge-credit {
+            background-color: #0984e3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>הארנק הדיגיטלי שלי</h1>
+            <p>ניהול השוברים, הזיכויים וההטבות שלך במקום אחד</p>
+        </div>
+        
+        <div class="search-filter">
+            <input type="text" id="search-input" placeholder="חיפוש...">
+            <select id="category-filter">
+                <option value="">כל הקטגוריות</option>
+                <option value="food">מזון ומסעדות</option>
+                <option value="shopping">קניות ואופנה</option>
+                <option value="entertainment">בידור ופנאי</option>
+                <option value="travel">נסיעות ותיירות</option>
+                <option value="other">אחר</option>
+            </select>
+            <select id="type-filter">
+                <option value="">כל סוגי השוברים</option>
+                <option value="discount">הנחה</option>
+                <option value="gift">מתנה</option>
+                <option value="credit">זיכוי</option>
+            </select>
+            <select id="sort-by">
+                <option value="expiry">מיון לפי תאריך תפוגה</option>
+                <option value="value">מיון לפי ערך</option>
+                <option value="name">מיון לפי שם</option>
+            </select>
+            <button id="filter-btn">סנן</button>
+        </div>
+        
+        <div id="vouchers-container" class="vouchers-container">
+            <!-- Vouchers will be added here dynamically -->
+        </div>
+    </div>
+    
+    <button class="add-btn" id="add-btn">+</button>
+    
+    <div class="modal" id="add-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>הוספת שובר חדש</h2>
+                <button class="close-btn" id="close-modal">&times;</button>
+            </div>
+            <form id="add-voucher-form">
+                <div class="form-group">
+                    <label for="voucher-name">שם השובר</label>
+                    <input type="text" id="voucher-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="voucher-business">בית העסק</label>
+                    <input type="text" id="voucher-business" required>
+                </div>
+                <div class="form-group">
+                    <label for="voucher-category">קטגוריה</label>
+                    <select id="voucher-category" required>
+                        <option value="food">מזון ומסעדות</option>
+                        <option value="shopping">קניות ואופנה</option>
+                        <option value="entertainment">בידור ופנאי</option>
+                        <option value="travel">נסיעות ותיירות</option>
+                        <option value="other">אחר</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="voucher-type">סוג השובר</label>
+                    <select id="voucher-type" required>
+                        <option value="discount">הנחה</option>
+                        <option value="gift">מתנה</option>
+                        <option value="credit">זיכוי</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="voucher-value">ערך השובר</label>
+                    <input type="number" id="voucher-value" required>
+                </div>
+                <div class="form-group">
+                    <label for="voucher-code">קוד השובר</label>
+                    <input type="text" id="voucher-code">
+                </div>
+                <div class="form-group">
+                    <label for="voucher-expiry">תאריך תפוגה</label>
+                    <input type="date" id="voucher-expiry" required>
+                </div>
+                <div class="form-group">
+                    <label for="voucher-notes">הערות</label>
+                    <textarea id="voucher-notes" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="voucher-image">תמונה (URL)</label>
+                    <input type="text" id="voucher-image" placeholder="הזן קישור לתמונה">
+                </div>
+                <button type="submit" class="submit-btn">שמור שובר</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - in a real app this would come from a database
+        let vouchers = [
+            {
+                id: 1,
+                name: "הנחה 20% בקניה הבאה",
+                business: "FOX",
+                category: "shopping",
+                type: "discount",
+                value: 20,
+                code: "FOX2023",
+                expiry: "2025-05-15",
+                notes: "לא כולל פריטים מוזלים",
+                image: "/api/placeholder/400/320"
+            },
+            {
+                id: 2,
+                name: "שובר מתנה",
+                business: "קפה קפה",
+                category: "food",
+                type: "gift",
+                value: 50,
+                code: "COFFEE50",
+                expiry: "2025-04-30",
+                notes: "תקף בכל הסניפים",
+                image: "/api/placeholder/400/320"
+            },
+            {
+                id: 3,
+                name: "זיכוי כספי",
+                business: "סינמה סיטי",
+                category: "entertainment",
+                type: "credit",
+                value: 75,
+                code: "CINEMA75",
+                expiry: "2025-07-01",
+                notes: "ניתן להשתמש בקופות בלבד",
+                image: "/api/placeholder/400/320"
+            }
+        ];
+
+        // DOM elements
+        const vouchersContainer = document.getElementById('vouchers-container');
+        const addBtn = document.getElementById('add-btn');
+        const addModal = document.getElementById('add-modal');
+        const closeModal = document.getElementById('close-modal');
+        const addVoucherForm = document.getElementById('add-voucher-form');
+        const searchInput = document.getElementById('search-input');
+        const categoryFilter = document.getElementById('category-filter');
+        const typeFilter = document.getElementById('type-filter');
+        const sortBy = document.getElementById('sort-by');
+        const filterBtn = document.getElementById('filter-btn');
+
+        // Open modal
+        addBtn.addEventListener('click', () => {
+            addModal.classList.add('active');
+        });
+
+        // Close modal
+        closeModal.addEventListener('click', () => {
+            addModal.classList.remove('active');
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === addModal) {
+                addModal.classList.remove('active');
+            }
+        });
+
+        // Add new voucher
+        addVoucherForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newVoucher = {
+                id: vouchers.length + 1,
+                name: document.getElementById('voucher-name').value,
+                business: document.getElementById('voucher-business').value,
+                category: document.getElementById('voucher-category').value,
+                type: document.getElementById('voucher-type').value,
+                value: parseFloat(document.getElementById('voucher-value').value),
+                code: document.getElementById('voucher-code').value,
+                expiry: document.getElementById('voucher-expiry').value,
+                notes: document.getElementById('voucher-notes').value,
+                image: document.getElementById('voucher-image').value || "/api/placeholder/400/320"
+            };
+            
+            vouchers.push(newVoucher);
+            renderVouchers(vouchers);
+            addModal.classList.remove('active');
+            addVoucherForm.reset();
+        });
+
+        // Filter vouchers
+        filterBtn.addEventListener('click', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const categoryValue = categoryFilter.value;
+            const typeValue = typeFilter.value;
+            const sortValue = sortBy.value;
+            
+            let filteredVouchers = vouchers.filter(voucher => {
+                const matchesSearch = voucher.name.toLowerCase().includes(searchTerm) || 
+                                     voucher.business.toLowerCase().includes(searchTerm) ||
+                                     voucher.notes.toLowerCase().includes(searchTerm);
+                
+                const matchesCategory = categoryValue ? voucher.category === categoryValue : true;
+                const matchesType = typeValue ? voucher.type === typeValue : true;
+                
+                return matchesSearch && matchesCategory && matchesType;
+            });
+            
+            // Sort vouchers
+            if (sortValue === 'expiry') {
+                filteredVouchers.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+            } else if (sortValue === 'value') {
+                filteredVouchers.sort((a, b) => b.value - a.value);
+            } else if (sortValue === 'name') {
+                filteredVouchers.sort((a, b) => a.name.localeCompare(b.name));
+            }
+            
+            renderVouchers(filteredVouchers);
+        });
+
+        // Calculate days remaining until expiry
+        function getDaysRemaining(expiryDate) {
+            const today = new Date();
+            const expiry = new Date(expiryDate);
+            const timeDiff = expiry - today;
+            return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        }
+
+        // Get expiry status
+        function getExpiryStatus(daysRemaining) {
+            if (daysRemaining <= 7) {
+                return 'expiry-critical';
+            } else if (daysRemaining <= 30) {
+                return 'expiry-warning';
+            } else {
+                return 'expiry-safe';
+            }
+        }
+
+        // Render vouchers
+        function renderVouchers(vouchersToRender) {
+            if (vouchersToRender.length === 0) {
+                vouchersContainer.innerHTML = `
+                    <div class="empty-state">
+                        <img src="/api/placeholder/150/150" alt="No vouchers">
+                        <h3>אין שוברים להצגה</h3>
+                        <p>הוסף שוברים חדשים על ידי לחיצה על כפתור הפלוס</p>
+                        <button class="use-btn" onclick="document.getElementById('add-btn').click()">הוסף שובר</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            vouchersContainer.innerHTML = '';
+            
+            vouchersToRender.forEach(voucher => {
+                const daysRemaining = getDaysRemaining(voucher.expiry);
+                const expiryStatus = getExpiryStatus(daysRemaining);
+                const expiryDate = new Date(voucher.expiry).toLocaleDateString('he-IL');
+                
+                // Calculate expiry progress (for the progress bar)
+                let expiryProgress = 100;
+                if (daysRemaining > 0) {
+                    // Assuming 90 days is full period
+                    expiryProgress = Math.min(100, Math.max(0, 100 - (daysRemaining / 90 * 100)));
+                }
+                
+                const voucherCard = document.createElement('div');
+                voucherCard.className = 'voucher-card';
+                
+                let badgeClass = '';
+                switch(voucher.category) {
+                    case 'food': badgeClass = 'badge-food'; break;
+                    case 'shopping': badgeClass = 'badge-shopping'; break;
+                    case 'entertainment': badgeClass = 'badge-entertainment'; break;
+                    case 'travel': badgeClass = 'badge-travel'; break;
+                    default: badgeClass = 'badge-other';
+                }
+                
+                let typeBadgeClass = '';
+                switch(voucher.type) {
+                    case 'discount': typeBadgeClass = 'badge-discount'; break;
+                    case 'gift': typeBadgeClass = 'badge-gift'; break;
+                    case 'credit': typeBadgeClass = 'badge-credit'; break;
+                    default: typeBadgeClass = 'badge-other';
+                }
+                
+                const typeText = {
+                    'discount': 'הנחה',
+                    'gift': 'מתנה',
+                    'credit': 'זיכוי'
+                };
+                
+                const categoryText = {
+                    'food': 'מזון ומסעדות',
+                    'shopping': 'קניות ואופנה',
+                    'entertainment': 'בידור ופנאי',
+                    'travel': 'נסיעות ותיירות',
+                    'other': 'אחר'
+                };
+                
+                voucherCard.innerHTML = `
+                    <div class="voucher-card-header">
+                        <h3>${voucher.name}</h3>
+                        <div>
+                            <span class="badge ${typeBadgeClass}">${typeText[voucher.type] || voucher.type}</span>
+                        </div>
+                    </div>
+                    <div class="voucher-card-content">
+                        <div class="voucher-details">
+                            <p><strong>בית עסק:</strong> ${voucher.business}</p>
+                            <p><strong>קטגוריה:</strong> <span class="badge ${badgeClass}">${categoryText[voucher.category] || voucher.category}</span></p>
+                            <p><strong>ערך:</strong> ${voucher.type === 'discount' ? voucher.value + '%' : '₪' + voucher.value}</p>
+                            <p><strong>תוקף עד:</strong> ${expiryDate}</p>
+                            ${voucher.notes ? `<p><strong>הערות:</strong> ${voucher.notes}</p>` : ''}
+                        </div>
+                        
+                        <div class="voucher-expiry">
+                            <div class="expiry-bar">
+                                <div class="expiry-progress ${expiryStatus}" style="width: ${expiryProgress}%"></div>
+                            </div>
+                            <span>${daysRemaining <= 0 ? 'פג תוקף' : daysRemaining + ' ימים'}</span>
+                        </div>
+                        
+                        <div class="voucher-code">
+                            ${voucher.code || 'אין קוד'}
+                        </div>
+                        
+                        <button class="use-btn">השתמש עכשיו</button>
+                    </div>
+                `;
+                
+                vouchersContainer.appendChild(voucherCard);
+            });
+        }
+
+        // Initial render
+        renderVouchers(vouchers);
+    </script>
+</body>
+</html>
