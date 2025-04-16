@@ -205,6 +205,7 @@
         .badge-gift { background-color: #e84393; }
         .badge-credit { background-color: #0984e3; }
         .badge-buyme { background-color: #1abc9c; }
+        .badge-tav-hazahav { background-color: #f1c40f; }
         .empty-state {
             text-align: center;
             padding: 40px;
@@ -224,6 +225,9 @@
             background-color: #f8f9fa;
             border-radius: 5px;
             border-right: 4px solid #1abc9c;
+        }
+        .supporting-networks.tav-hazahav {
+            border-right-color: #f1c40f;
         }
         .supporting-networks a {
             color: #3498db;
@@ -261,6 +265,7 @@
                 <option value="gift">מתנה</option>
                 <option value="credit">זיכוי</option>
                 <option value="buyme">Buy Me All</option>
+                <option value="tav-hazahav">תו הזהב</option>
             </select>
             <select id="sort-by">
                 <option value="expiry">מיון לפי תאריך תפוגה</option>
@@ -272,12 +277,6 @@
         
         <div id="vouchers-container" class="vouchers-container">
             <!-- Vouchers will be added here dynamically -->
-            <div class="empty-state">
-                <img src="/api/placeholder/150/150" alt="אין שוברים">
-                <h3>אין עדיין שוברים להצגה</h3>
-                <p>הוסף שוברים חדשים על ידי לחיצה על כפתור הפלוס</p>
-                <button class="btn use-btn" onclick="document.getElementById('add-modal').classList.add('active')">הוסף שובר חדש</button>
-            </div>
         </div>
     </div>
     
@@ -316,6 +315,7 @@
                         <option value="gift">מתנה</option>
                         <option value="credit">זיכוי</option>
                         <option value="buyme">Buy Me All</option>
+                        <option value="tav-hazahav">תו הזהב</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -373,6 +373,7 @@
                         <option value="gift">מתנה</option>
                         <option value="credit">זיכוי</option>
                         <option value="buyme">Buy Me All</option>
+                        <option value="tav-hazahav">תו הזהב</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -410,8 +411,8 @@
     </div>
 
     <script>
-        // Initialize empty vouchers array
-        let vouchers = [];
+        // Initialize vouchers array from localStorage
+        let vouchers = JSON.parse(localStorage.getItem('digitalWalletVouchers') || '[]');
 
         // DOM elements
         const vouchersContainer = document.getElementById('vouchers-container');
@@ -436,6 +437,11 @@
             if (e.target === deleteModal) deleteModal.classList.remove('active');
         });
 
+        // Save vouchers to localStorage
+        function saveVouchers() {
+            localStorage.setItem('digitalWalletVouchers', JSON.stringify(vouchers));
+        }
+
         // Add new voucher
         addVoucherForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -454,6 +460,7 @@
             };
             
             vouchers.push(newVoucher);
+            saveVouchers();
             renderVouchers(vouchers);
             addModal.classList.remove('active');
             addVoucherForm.reset();
@@ -480,6 +487,7 @@
                     image: vouchers[index].image
                 };
                 
+                saveVouchers();
                 renderVouchers(vouchers);
                 editModal.classList.remove('active');
             }
@@ -489,6 +497,7 @@
         document.getElementById('confirm-delete').addEventListener('click', () => {
             const voucherId = parseInt(document.getElementById('delete-voucher-id').value);
             vouchers = vouchers.filter(v => v.id !== voucherId);
+            saveVouchers();
             renderVouchers(vouchers);
             deleteModal.classList.remove('active');
         });
@@ -573,7 +582,8 @@
                 'discount': 'הנחה',
                 'gift': 'מתנה',
                 'credit': 'זיכוי',
-                'buyme': 'Buy Me All'
+                'buyme': 'Buy Me All',
+                'tav-hazahav': 'תו הזהב'
             };
             
             vouchersToRender.forEach(voucher => {
@@ -591,44 +601,71 @@
                 
                 const voucherEl = document.createElement('div');
                 voucherEl.className = 'voucher-card';
-                voucherEl.innerHTML = `
+                
+                // Create header with voucher name and type
+                let headerContent = `
                     <div class="voucher-card-header">
                         <h3>${voucher.name}</h3>
                         <span class="badge badge-${voucher.type}">${typeLabels[voucher.type]}</span>
                     </div>
-                    <div class="voucher-card-content">
-                        <p><strong>בית עסק:</strong> ${voucher.business}</p>
-                        <p><strong>קטגוריה:</strong> <span class="badge badge-${voucher.category}">${categoryLabels[voucher.category]}</span></p>
-                        <p><strong>ערך:</strong> ${voucher.type === 'discount' ? voucher.value + '%' : '₪' + voucher.value}</p>
-                        <p><strong>תוקף עד:</strong> ${expiry.toLocaleDateString('he-IL')}</p>
-                        ${voucher.notes ? `<p><strong>הערות:</strong> ${voucher.notes}</p>` : ''}
-                        
-                        <div class="voucher-expiry">
-                            <div class="expiry-bar">
-                                <div class="expiry-progress ${expiryStatus}" style="width: ${expiryProgress}%"></div>
-                            </div>
-                            <span>${daysRemaining <= 0 ? 'פג תוקף' : daysRemaining + ' ימים'}</span>
-                        </div>
-                        
-                        <div class="voucher-code">${voucher.code || 'אין קוד'}</div>
-                        
-                        ${voucher.type === 'buyme' ? `
-                            <div class="supporting-networks">
-                                <strong>רשתות מכבדות:</strong> 
-                                <a href="https://buyme.co.il/brands/13438757" target="_blank">צפה ברשימת הרשתות</a>
-                            </div>
-                        ` : ''}
-                        
-                        <button class="btn edit-btn" onclick="openEditModal(${voucher.id})">ערוך</button>
-                        <button class="btn delete-btn" onclick="openDeleteModal(${voucher.id})">מחק</button>
-                    </div>
                 `;
                 
+                // Create content section
+                let contentHtml = `
+                    <div class="voucher-card-content">
+                        <p><strong>בית עסק:</strong> ${voucher.business}</p>
+                `;
+                
+                // Display category for non-gift card types
+                if (voucher.type !== 'buyme' && voucher.type !== 'tav-hazahav') {
+                    contentHtml += `<p><strong>קטגוריה:</strong> <span class="badge badge-${voucher.category}">${categoryLabels[voucher.category]}</span></p>`;
+                }
+                
+                contentHtml += `
+                    <p><strong>ערך:</strong> ${voucher.type === 'discount' ? voucher.value + '%' : '₪' + voucher.value}</p>
+                    <p><strong>תוקף עד:</strong> ${expiry.toLocaleDateString('he-IL')}</p>
+                    ${voucher.notes ? `<p><strong>הערות:</strong> ${voucher.notes}</p>` : ''}
+                    
+                    <div class="voucher-expiry">
+                        <div class="expiry-bar">
+                            <div class="expiry-progress ${expiryStatus}" style="width: ${expiryProgress}%"></div>
+                        </div>
+                        <span>${daysRemaining <= 0 ? 'פג תוקף' : daysRemaining + ' ימים'}</span>
+                    </div>
+                    
+                    <div class="voucher-code">${voucher.code || 'אין קוד'}</div>
+                `;
+                
+                // Add supporting networks info for Buy Me or Tav Hazahav
+                if (voucher.type === 'buyme') {
+                    contentHtml += `
+                        <div class="supporting-networks">
+                            <strong>רשתות מכבדות:</strong> 
+                            <a href="https://buyme.co.il/brands/13438757" target="_blank">צפה ברשימת הרשתות</a>
+                        </div>
+                    `;
+                } else if (voucher.type === 'tav-hazahav') {
+                    contentHtml += `
+                        <div class="supporting-networks tav-hazahav">
+                            <strong>רשתות מכבדות:</strong> 
+                            <a href="https://tavhazahav.co.il/shops/" target="_blank">צפה ברשימת הרשתות</a>
+                        </div>
+                    `;
+                }
+                
+                // Add action buttons
+                contentHtml += `
+                    <button class="btn edit-btn" onclick="openEditModal(${voucher.id})">ערוך</button>
+                    <button class="btn delete-btn" onclick="openDeleteModal(${voucher.id})">מחק</button>
+                </div>
+                `;
+                
+                voucherEl.innerHTML = headerContent + contentHtml;
                 vouchersContainer.appendChild(voucherEl);
             });
         }
 
-        // Initial render
+        // Initial render from localStorage
         renderVouchers(vouchers);
     </script>
 </body>
